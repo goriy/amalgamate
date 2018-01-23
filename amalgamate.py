@@ -37,7 +37,7 @@ import datetime
 import json
 import os
 import re
-import sys
+# import sys
 from io import open
 
 
@@ -92,7 +92,8 @@ class Amalgamation(object):
         for file_path in self.sources:
             # Do not check the include paths while processing the source
             # list, all given source paths must be correct.
-            actual_path = self.actual_path(file_path)
+
+            # actual_path = self.actual_path(file_path)
             print(" - processing \"{0}\"".format(file_path))
             t = TranslationUnit(file_path, self, True)
             amalgamation += t.content
@@ -105,6 +106,7 @@ class Amalgamation(object):
             print("Files processed: {0}".format(self.sources))
             print("Files included: {0}".format(self.included_files))
         print("")
+
 
 class TranslationUnit(object):
 
@@ -153,15 +155,15 @@ class TranslationUnit(object):
             if current == '"':
                 # String value.
                 i = self._search_content(j, self.string_pattern,
-                    skippable_contexts)
+                                         skippable_contexts)
             elif current == '*' and previous == '/':
                 # C style comment.
                 i = self._search_content(j, self.c_comment_pattern,
-                    skippable_contexts)
+                                         skippable_contexts)
             elif current == '/' and previous == '/':
                 # C++ style comment.
                 i = self._search_content(j, self.cpp_comment_pattern,
-                    skippable_contexts)
+                                         skippable_contexts)
             else:
                 # Skip to the next char.
                 i += 1
@@ -192,8 +194,9 @@ class TranslationUnit(object):
             if not self._is_within(pragma_once_match, skippable_contexts):
                 pragmas.append(pragma_once_match)
 
-            pragma_once_match = self.pragma_once_pattern.search(self.content,
-                pragma_once_match.end())
+            pragma_once_match = \
+                self.pragma_once_pattern.search(self.content,
+                                                pragma_once_match.end())
 
         # Handle all collected pragma once directives.
         prev_end = 0
@@ -228,7 +231,7 @@ class TranslationUnit(object):
                     includes.append((include_match, found_included_path))
 
             include_match = self.include_pattern.search(self.content,
-                include_match.end())
+                                                        include_match.end())
 
         # Handle all collected include directives.
         prev_end = 0
@@ -238,7 +241,8 @@ class TranslationUnit(object):
             tmp_content += self.content[prev_end:include_match.start()]
             tmp_content += "// {0}\n".format(include_match.group(0))
             if found_included_path not in self.amalgamation.included_files:
-                t = TranslationUnit(found_included_path, self.amalgamation, False)
+                t = TranslationUnit(found_included_path,
+                                    self.amalgamation, False)
                 tmp_content += t.content
             prev_end = include_match.end()
         tmp_content += self.content[prev_end:]
@@ -267,6 +271,7 @@ class TranslationUnit(object):
             self.content = f.read()
             self._process()
 
+
 def main():
     description = "Amalgamate C source and header files."
     usage = " ".join([
@@ -277,26 +282,31 @@ def main():
         "[-e encoding]",
         "[-p path/to/prologue.(c|h)]"
     ])
-    argsparser = argparse.ArgumentParser(
-        description=description, usage=usage)
+    argsparser = argparse.ArgumentParser(description=description, usage=usage)
 
     argsparser.add_argument("-v", "--verbose", dest="verbose",
-        choices=["yes", "no"], metavar="", help="be verbose")
+                            choices=["yes", "no"], metavar="",
+                            help="be verbose")
 
     argsparser.add_argument("-c", "--config", dest="config",
-        required=True, metavar="", help="path to a JSON config file")
+                            required=True, metavar="",
+                            help="path to a JSON config file")
 
     argsparser.add_argument("-s", "--source", dest="source_path",
-        required=True, metavar="", help="source code path")
+                            required=True, metavar="",
+                            help="source code path")
 
     argsparser.add_argument("-e", "--encoding", dest="encoding",
-        required=False, metavar="", help="encoding, default=UTF-8", default="UTF-8")
+                            required=False, metavar="",
+                            help="encoding, default=UTF-8", default="UTF-8")
 
     argsparser.add_argument("-p", "--prologue", dest="prologue",
-        required=False, metavar="", help="path to a C prologue file")
+                            required=False, metavar="",
+                            help="path to a C prologue file")
 
     amalgamation = Amalgamation(argsparser.parse_args())
     amalgamation.generate()
+
 
 if __name__ == "__main__":
     main()
